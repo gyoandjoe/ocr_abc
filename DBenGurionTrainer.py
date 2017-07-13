@@ -44,7 +44,7 @@ lrDecayFrecyency = experimenRepo.ObtenerFrecuencyLRDecay()
 
 
 #Primero de bemos cargar todos los parametros del experimento que se quiere
-DBG = DBenGurionOCR.DBenGurionOCR(
+DBG = DBenGurionOCR.DBenGurionOCR.Trainer(
             id_experiment = idExperiment,
             layers_metaData = DBenGurionConfig.layers_metaData,
             batch_size = batchSize,

@@ -5,6 +5,7 @@ import Domain.Arquitectures.DBenGurionArchitecture as DBenGurionArchitecture
 import _pickle as cPickle
 import Domain.Core.LayerEnum as LayerEnum
 from theano.tensor.shared_randomstreams import RandomStreams
+
 """
 Este es el modelo principal que se podra entrenar o usar para propositos finales, debe diseñarse teniendo en cuenta que podra tener 2 usos
 """
@@ -18,9 +19,75 @@ class DBenGurionOCR(object):
         return
 
     """
+    Constructor para validacion
+    """
+
+    @classmethod
+    def Validator(self,id_experiment,layers_metaData, batch_size, raw_data_set, logger,weigthts_service, experimentsRepo,initial_weights):
+        self.idExperiment = id_experiment
+        self.logger = logger
+        self.weigthts_service = weigthts_service
+        self.experimentsRepo = experimentsRepo
+
+        self.x = T.tensor4('x')  # the data is presented as rasterized images
+        self.y = T.ivector('y')
+
+        index = T.lscalar()
+
+        random_droput = np.random.RandomState(1234)
+        rng_droput = T.shared_randomstreams.RandomStreams(random_droput.randint(999999))
+
+        rawXDataSet = raw_data_set[0]
+        rawYDataSet = raw_data_set[1]
+        self.totalDataSize = rawXDataSet.shape[0]
+        self.no_batchs_in_data_set = self.totalDataSize // batch_size
+
+        # batch_size = 50000
+        # img_input =  x #T.reshape(x,(batch_size, 1, 28, 28))
+        self.CNN = DBenGurionArchitecture.DBenGurionArchitecture(
+            image_input=self.x,
+            batch_size=batch_size,
+            layers_metaData=layers_metaData,
+            initWeights=initial_weights,
+            srng=rng_droput,
+            no_channels_imageInput=1,
+            isTraining=0
+        )
+
+        XimgLetras = np.asarray(rawXDataSet, dtype=theano.config.floatX).reshape(
+            (self.totalDataSize, 1, 64, 64))
+        XimgLetrasShared = theano.shared(XimgLetras)
+
+        YimgLetras = np.asarray(rawYDataSet, dtype=np.int32)
+        YimgLetrasShared = theano.shared(YimgLetras)
+
+        cost = self.CNN.SoftMax_1.negative_log_likelihood(self.y)
+        self.evaluate_model_with_cost = theano.function(
+            [index],
+            cost,
+            givens={
+                self.x: XimgLetrasShared[index * batch_size: (index + 1) * batch_size],
+                self.y: YimgLetrasShared[index * batch_size: (index + 1) * batch_size]
+            }
+        )
+
+        error = self.CNN.SoftMax_1.errors(self.y)
+        self.evaluate_model_with_error = theano.function(
+            [index],
+            error,
+            givens={
+                self.x: XimgLetrasShared[index * batch_size: (index + 1) * batch_size],
+                self.y: YimgLetrasShared[index * batch_size: (index + 1) * batch_size]
+            }
+        )
+        return self()
+
+    """
     Constructor para Entrenamiento
     """
-    def __init__(self,id_experiment,layers_metaData, batch_size, raw_train_set, logger,weigthts_service, experimentsRepo,initial_weights,max_epochs,with_lr_decay,learning_rate,saveWeigthsFrecuency,frecuency_lr_decay):
+
+    @classmethod
+    def Trainer(self,id_experiment,layers_metaData, batch_size, raw_train_set, logger, weigthts_service, experimentsRepo,initial_weights,max_epochs,with_lr_decay,learning_rate,saveWeigthsFrecuency,frecuency_lr_decay):
         self.idExperiment = id_experiment
         self.logger = logger
         self.max_epochs = max_epochs
@@ -53,7 +120,8 @@ class DBenGurionOCR(object):
             layers_metaData=layers_metaData,
             initWeights=initial_weights,
             srng=rng_droput,
-            no_channels_imageInput=1
+            no_channels_imageInput=1,
+            isTraining=1
         )
 
         XimgLetras = np.asarray(rawXTrainingDataSet, dtype=theano.config.floatX).reshape((self.trainDataSetSize, 1, 64, 64))
@@ -64,6 +132,8 @@ class DBenGurionOCR(object):
 
         #cost = self.CNN.SoftMax_1.cost_function(y)
         cost = self.CNN.SoftMax_1.negative_log_likelihood(self.y)
+
+        error = cost = self.CNN.SoftMax_1.errors(self.y)
         #error = self.CNN.SoftMax_1.(y)
 
         weights = [self.CNN.conv1.Filter,
@@ -98,14 +168,8 @@ class DBenGurionOCR(object):
             }
         )
 
-        self.evaluation_model_with_cost = theano.function(
-            [index],
-            cost,  # self.classifier.FC.p_y_given_x,#dropout.output
-            givens={
-                self.x: XimgLetrasShared[index * batch_size: (index + 1) * batch_size],
-                self.y: YimgLetrasShared[index * batch_size: (index + 1) * batch_size]
-            }
-        )
+        return self()
+
 
     def GetWeigthsValuesByLayer(self, layer):
         if layer is LayerEnum.LayerEnum.conv1:
@@ -187,6 +251,30 @@ class DBenGurionOCR(object):
         return
 
 
+    def CalculateCost(self,noBatchsToEvaluate = -1):
+
+        if noBatchsToEvaluate == -1:
+           noBatchsToEvaluate = self.no_batchs_in_data_set
+        sumaCost = 0.0
+        for batch_index in range(noBatchsToEvaluate):
+            cost = self.evaluate_model_with_cost(batch_index)
+            print ("calculando costos: costo: "+str(cost)+" en batch: " + str(batch_index))
+            sumaCost=sumaCost + cost
+        promedio = sumaCost / noBatchsToEvaluate
+        return promedio
+
+    def CalculateError(self,noBatchsToEvaluate = -1):
+
+        if noBatchsToEvaluate == -1:
+           noBatchsToEvaluate = self.no_batchs_in_data_set
+
+        sumaCost = 0.0
+        for batch_index in range(noBatchsToEvaluate):
+            error = self.evaluate_model_with_error(batch_index)
+            print ("calculando costos: errores: "+str(error)+" en batch: " + str(batch_index))
+            sumaCost=sumaCost + error
+        promedio = sumaCost / noBatchsToEvaluate
+        return promedio
 """
         self.evaluation_model_with_errors = theano.function(
             [index],

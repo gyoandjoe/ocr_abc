@@ -3,14 +3,18 @@ import numpy as np
 import pandas as pd
 
 import Domain.Analysis.AnalisysRepo as AnalisysRepo
+import Domain.Experiments.ExperimentsRepo as ExperimentsRepo
+import Domain.Core.Weights.WeigthsService as WeigthsService
+import Domain.Core.Weights.WeigthsRepo as WeigthsRepo
+import Domain.Arquitectures.DBenGurionOCR as D_BenGurionOCR
 
 
 class Analizador(object):
     def __init__(self, data_base):
-        self.analisys_repo = AnalisysRepo(data_base)
+        self.analisys_repo = AnalisysRepo.AnalisysRepo(data_base)
 
 
-    def AnalizarInRealTIme(self, id_experiment,velocity=0.05):
+    def AnalizarInRealTIme(self, id_experiment, velocity_update=0.05):
         #plt.axis([0, 10, 0, 1])
         plt.ion()
 
@@ -35,7 +39,7 @@ class Analizador(object):
             #plt.show()
 
 
-            plt.pause(velocity)
+            plt.pause(velocity_update)
 
 
     def AnalizarRapidamente(self, id_experiment):
@@ -100,108 +104,67 @@ class Analizador(object):
         plt.show()
         return
 
-    def BuildLearningCurveAnalysisByExamples(self, id_experiment, id_Analisys, bd, id_weigths, folderWeigths):
-        experiment_repo = Experiments.ExperimentsRepo(bd, id_experiment)
-        weigths_service = WeigthsService.WigthsService(bd, folderWeigths, id_experiment,
-                                                       TypeInitWFunctionEnum.TypeInitWFunctionEnum.UniformDistribution)
+    def BuildLearningCurveAnalysisByExamples(self, id_experiment,id_Analisys, bd, id_weigths, folderWeigths,layers_metaData,raw_train_set,train_batch_size,raw_validation_set,validation_batch_size,logger,weigthts_service,experimentsRepo):
+        weigths_repo = WeigthsRepo.WeigthsRepo(bd,folderWeigths)
+        weigths_service = WeigthsService.WeigthsService(bd, weigths_repo)
 
 
-        '--------------------------- VALIDATION SET -------------------------------------------------'
-
-        totalDataSize = 10000
-        lBatcthSize = 500
-        no_batchs = totalDataSize // lBatcthSize
-
-        lvt = LenetValidationAndTest(
-            dataset_file=experiment_repo.ObtenerArchivoDataSet(),
-            batch_size=lBatcthSize,  # 5000 en total
-            dataset_size=totalDataSize,
-            weigthts_service=weigths_service,
-            tipoDataSet=TiposDataSetEnum.TiposDataSetEnum.validationSet
+        '--------------------------- Train Set -------------------------------------------------'
+        DBG_OCR = D_BenGurionOCR.DBenGurionOCR.Validator(
+            id_experiment = id_experiment,
+            layers_metaData = layers_metaData,
+            batch_size = train_batch_size,
+            raw_data_set = raw_train_set,
+            logger=logger,
+            weigthts_service=weigthts_service,
+            experimentsRepo=experimentsRepo,
+            initial_weights = weigths_service.LoadRawWeigths(id_weigths)
         )
+
+        no_batchs = DBG_OCR.totalDataSize // train_batch_size
+
         ar = AnalisysRepo.AnalisysRepo(data_base=bd)
         for i in range(1, no_batchs):
-            l_data_Size = i * lBatcthSize  # cantidad de ejemplos que se evaluaran
+            l_data_Size = i * train_batch_size  # cantidad de ejemplos que se evaluaran
 
             print("Calculando Errores en validationSet y costos en validation set")
-            averageError = lvt.CalculateError(id_weigths=id_weigths, noBatchsToEvaluate=i)
+            averageError = DBG_OCR.CalculateError(noBatchsToEvaluate=i)
 
             print("--------[Validation Set] El error promedio es: " + str(averageError) + " para " + str(l_data_Size) + " ejemplos")
-            averageCost = lvt.CalculateCost(id_weigths=id_weigths, noBatchsToEvaluate=i)
+            averageCost = DBG_OCR.CalculateCost(noBatchsToEvaluate=i)
 
-            ar.UpdateLearningCurveErrorXNoExamp(id_Analisys, l_data_Size, totalDataSize, averageError, averageCost,
-                                                'ValSet')
-            print
-            "--------[Validation Set] El costo promedio es: " + str(averageCost) + " para " + str(
-                l_data_Size) + " ejemplos"
+            ar.UpdateLearningCurveErrorXNoExamp(id_Analisys, l_data_Size, DBG_OCR.totalDataSize, averageError, averageCost,'ValSet')
+            print("--------[Validation Set] El costo promedio es: " + str(averageCost) + " para " + str(l_data_Size) + " ejemplos")
 
-        print
-        '--------------------------- TEST SET -------------------------------------------------'
+        print('--------------------------- Validation SET -------------------------------------------------')
 
-        totalDataSize = 10000
-        lBatcthSize = 500
-        no_batchs = totalDataSize // lBatcthSize
-
-        lvt = LenetValidationAndTest(
-            dataset_file=experiment_repo.ObtenerArchivoDataSet(),
-            batch_size=lBatcthSize,  # 5000 en total
-            dataset_size=totalDataSize,
-            weigthts_service=weigths_service,
-            tipoDataSet=TiposDataSetEnum.TiposDataSetEnum.testSet
+        DBG_OCR = D_BenGurionOCR.DBenGurionOCR.Validator(
+            id_experiment = id_experiment,
+            layers_metaData = layers_metaData,
+            batch_size = validation_batch_size,
+            raw_data_set = raw_train_set,
+            logger=logger,
+            weigthts_service=weigthts_service,
+            experimentsRepo=experimentsRepo,
+            initial_weights = weigths_service.LoadRawWeigths(id_weigths)
         )
+        no_batchs = DBG_OCR.totalDataSize // validation_batch_size
 
         ar = AnalisysRepo.AnalisysRepo(data_base=bd)
 
-        for i in xrange(1, no_batchs):
-            l_data_Size = i * lBatcthSize  # cantidad de ejemplos que se evaluaran
+        for i in range(1, no_batchs):
+            l_data_Size = i * validation_batch_size  # cantidad de ejemplos que se evaluaran
 
-            print
-            "Calculando Errores en test set y costos en test set"
-            averageError = lvt.CalculateError(id_weigths=id_weigths, noBatchsToEvaluate=i)
+            print("Calculando Errores en test set y costos en test set")
+            averageError = DBG_OCR.CalculateError(id_weigths=id_weigths, noBatchsToEvaluate=i)
 
-            print
-            "--------[Test Set] El error promedio es: " + str(averageError) + " para " + str(lBatcthSize) + " ejemplos"
-            averageCost = lvt.CalculateCost(id_weigths=id_weigths, noBatchsToEvaluate=i)
+            print("--------[Test Set] El error promedio es: " + str(averageError) + " para " + str(l_data_Size) + " ejemplos")
+            averageCost = DBG_OCR.CalculateCost(id_weigths=id_weigths, noBatchsToEvaluate=i)
 
-            ar.UpdateLearningCurveErrorXNoExamp(id_Analisys, l_data_Size, totalDataSize, averageError, averageCost,
-                                                'TestSet')
-
-            print
-            "--------[Test Set] El costo promedio es: " + str(averageCost) + " para " + str(lBatcthSize) + " ejemplos"
+            ar.UpdateLearningCurveErrorXNoExamp(id_Analisys, l_data_Size, DBG_OCR.totalDataSize, averageError, averageCost,'TestSet')
+            print("--------[Test Set] El costo promedio es: " + str(averageCost) + " para " + str(l_data_Size) + " ejemplos")
 
         return
-        print
-        '--------------------------- TRAIN SET -------------------------------------------------'
-
-        totalDataSize = 50000
-        lBatcthSize = 500
-        no_batchs = totalDataSize // lBatcthSize
-
-        lvt = LenetValidationAndTest(
-            dataset_file=experiment_repo.ObtenerArchivoDataSet(),
-            batch_size=lBatcthSize,
-            dataset_size=totalDataSize,
-            weigthts_service=weigths_service,
-            tipoDataSet=TiposDataSetEnum.TiposDataSetEnum.trainSet
-        )
-
-        ar = AnalisysRepo.AnalisysRepo(data_base=bd)
-
-        for i in xrange(1, no_batchs):
-            l_data_Size = i * lBatcthSize  # cantidad de ejemplos que se evaluaran
-
-            print
-            "Calculando Errores en Train set y costos en Train set"
-            averageError = lvt.CalculateError(id_weigths=id_weigths, noBatchsToEvaluate=i)
-
-            print
-            "--------[Train Set] El error promedio es: " + str(averageError) + " para " + str(l_data_Size) + " ejemplos"
-            averageCost = lvt.CalculateCost(id_weigths=id_weigths, noBatchsToEvaluate=i)
-
-            ar.UpdateLearningCurveErrorXNoExamp(id_Analisys, l_data_Size, totalDataSize, averageError, averageCost,
-                                                'TrainSet')
-            print
-            "--------[Train Set] El costo promedio es: " + str(averageCost) + " para " + str(l_data_Size) + " ejemplos"
 
     def GraficarLCXErrors(self, id_analisys):
         # TestSet

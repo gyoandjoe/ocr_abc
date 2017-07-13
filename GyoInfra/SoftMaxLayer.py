@@ -57,5 +57,16 @@ class SoftMaxLayer(object):
             result)  # Regresamos el promedio de las respuestas calculadas, si es muy alto significa que va bien por lo que queremos Maximizar el resultado
 
 
+
     def cost_function(self, true_y):
         return T.mean((T.nnet.categorical_crossentropy(self.p_y_given_x, true_y)))
+
+    def errors(self, y):
+        """
+        Regresa el promedio de errores, el resultado esta en el rango DE 0 a 1 donde 0 significa que no hubo error y 1 significa que en todos hubo error
+        :param y:
+        :return:
+        """
+        result = T.neq(self.y_pred, y)  # the T.neq operator returns a vector of 0s and 1s, where 1 represents a mistake in prediction
+
+        return T.mean(result)

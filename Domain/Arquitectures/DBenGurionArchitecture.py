@@ -18,7 +18,7 @@ Usamos la arquitectura para los propositos de la red neuronal
 
 
 class DBenGurionArchitecture(object):
-    def __init__(self, image_input, batch_size, layers_metaData, initWeights, srng,no_channels_imageInput=1):
+    def __init__(self, image_input, batch_size, layers_metaData, initWeights, srng,no_channels_imageInput=1,isTraining=1):
         """
         :param image_input: size: 64x64, channel: 1
         :param conv1_noFilters:
@@ -146,7 +146,7 @@ class DBenGurionArchitecture(object):
         )
         self.FC_relu_1 = utils.Relu(self.FC_1.ProductoCruz)
 
-        self.DO_1 = dropout_layer.DropOutLayer(self.FC_relu_1,srng, (batch_size,layers_metaData['DO1_size_in']),1,0.5)
+        self.DO_1 = dropout_layer.DropOutLayer(self.FC_relu_1,srng, (batch_size,layers_metaData['DO1_size_in']),isTraining,0.5)
 
         FC2Values = initWeights['FC2Values']
         FC2_BiasInitial_bias_values = initWeights['FC2BiasValues']
@@ -158,7 +158,7 @@ class DBenGurionArchitecture(object):
         )
         self.FC_relu_2 = utils.Relu(self.FC_2.ProductoCruz)
 
-        self.DO_2 = dropout_layer.DropOutLayer(self.FC_relu_2, srng, (batch_size, layers_metaData['DO2_size_in']), 1, 0.5)
+        self.DO_2 = dropout_layer.DropOutLayer(self.FC_relu_2, srng, (batch_size, layers_metaData['DO2_size_in']), isTraining, 0.5)
 
         SoftMaxValues = initWeights['SoftMax1Values']
         SoftMaxBiasInitial_bias_values = initWeights['SoftMax1BiasValues']
