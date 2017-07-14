@@ -51,7 +51,7 @@ class DBenGurionOCR(object):
             initWeights=initial_weights,
             srng=rng_droput,
             no_channels_imageInput=1,
-            isTraining=0
+            isTraining=1
         )
 
         XimgLetras = np.asarray(rawXDataSet, dtype=theano.config.floatX).reshape(
@@ -133,7 +133,7 @@ class DBenGurionOCR(object):
         #cost = self.CNN.SoftMax_1.cost_function(y)
         cost = self.CNN.SoftMax_1.negative_log_likelihood(self.y)
 
-        error = cost = self.CNN.SoftMax_1.errors(self.y)
+        error =  self.CNN.SoftMax_1.errors(self.y)
         #error = self.CNN.SoftMax_1.(y)
 
         weights = [self.CNN.conv1.Filter,
@@ -173,23 +173,23 @@ class DBenGurionOCR(object):
 
     def GetWeigthsValuesByLayer(self, layer):
         if layer is LayerEnum.LayerEnum.conv1:
-            return np.asarray(self.CNN.conv1.Filter.get_value())
+            return np.asarray(self.CNN.conv1.Filter.get_value(),dtype=theano.config.floatX)
         if layer is LayerEnum.LayerEnum.conv2:
-            return np.asarray(self.CNN.conv2.Filter.get_value())
+            return np.asarray(self.CNN.conv2.Filter.get_value(),dtype=theano.config.floatX)
         if layer is LayerEnum.LayerEnum.conv3:
-            return np.asarray(self.CNN.conv3.Filter.get_value())
+            return np.asarray(self.CNN.conv3.Filter.get_value(),dtype=theano.config.floatX)
         if layer is LayerEnum.LayerEnum.conv4:
-            return np.asarray(self.CNN.conv4.Filter.get_value())
+            return np.asarray(self.CNN.conv4.Filter.get_value(),dtype=theano.config.floatX)
         if layer is LayerEnum.LayerEnum.conv5:
-            return np.asarray(self.CNN.conv5.Filter.get_value())
+            return np.asarray(self.CNN.conv5.Filter.get_value(),dtype=theano.config.floatX)
         if layer is LayerEnum.LayerEnum.conv6:
-            return np.asarray(self.CNN.conv6.Filter.get_value())
+            return np.asarray(self.CNN.conv6.Filter.get_value(),dtype=theano.config.floatX)
         elif layer is LayerEnum.LayerEnum.FC_1:
-            return (np.asarray(self.CNN.FC_1.Filter.get_value()),np.asarray(self.CNN.FC_1.Bias.get_value()))
+            return (np.asarray(self.CNN.FC_1.Filter.get_value(),dtype=theano.config.floatX),np.asarray(self.CNN.FC_1.Bias.get_value(),dtype=theano.config.floatX))
         elif layer is LayerEnum.LayerEnum.FC_2:
-            return (np.asarray(self.CNN.FC_2.Filter.get_value()),np.asarray(self.CNN.FC_2.Bias.get_value()))
+            return (np.asarray(self.CNN.FC_2.Filter.get_value(),dtype=theano.config.floatX),np.asarray(self.CNN.FC_2.Bias.get_value(),dtype=theano.config.floatX))
         elif layer is LayerEnum.LayerEnum.SoftMax_1:
-            return (np.asarray(self.CNN.SoftMax_1.Filter.get_value()),np.asarray(self.CNN.SoftMax_1.Bias.get_value()))
+            return (np.asarray(self.CNN.SoftMax_1.Filter.get_value(),dtype=theano.config.floatX),np.asarray(self.CNN.SoftMax_1.Bias.get_value(),dtype=theano.config.floatX))
 
     def Train(self, current_epoch=0, id_train='', extra_info='' ):
         for epoch_index in range(self.max_epochs):
@@ -236,8 +236,8 @@ class DBenGurionOCR(object):
             "conv6Values": self.GetWeigthsValuesByLayer(LayerEnum.LayerEnum.conv6),
             "FC1Values": self.GetWeigthsValuesByLayer(LayerEnum.LayerEnum.FC_1)[0],
             "FC1BiasValues": self.GetWeigthsValuesByLayer(LayerEnum.LayerEnum.FC_1)[1],
-            "FC2Values": self.GetWeigthsValuesByLayer(LayerEnum.LayerEnum.FC_1)[0],
-            "FC2BiasValues": self.GetWeigthsValuesByLayer(LayerEnum.LayerEnum.FC_1)[1],
+            "FC2Values": self.GetWeigthsValuesByLayer(LayerEnum.LayerEnum.FC_2)[0],
+            "FC2BiasValues": self.GetWeigthsValuesByLayer(LayerEnum.LayerEnum.FC_2)[1],
             "SoftMax1Values": self.GetWeigthsValuesByLayer(LayerEnum.LayerEnum.SoftMax_1)[0],
             "SoftMax1BiasValues": self.GetWeigthsValuesByLayer(LayerEnum.LayerEnum.SoftMax_1)[1]
         }

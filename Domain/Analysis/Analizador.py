@@ -109,7 +109,8 @@ class Analizador(object):
         weigths_service = WeigthsService.WeigthsService(bd, weigths_repo)
 
 
-        '--------------------------- Train Set -------------------------------------------------'
+        print('--------------------------- Train Set -------------------------------------------------')
+        ws=weigths_service.LoadRawWeigths(id_weigths)
         DBG_OCR = D_BenGurionOCR.DBenGurionOCR.Validator(
             id_experiment = id_experiment,
             layers_metaData = layers_metaData,
@@ -118,7 +119,7 @@ class Analizador(object):
             logger=logger,
             weigthts_service=weigthts_service,
             experimentsRepo=experimentsRepo,
-            initial_weights = weigths_service.LoadRawWeigths(id_weigths)
+            initial_weights = ws
         )
 
         no_batchs = DBG_OCR.totalDataSize // train_batch_size
@@ -127,17 +128,18 @@ class Analizador(object):
         for i in range(1, no_batchs):
             l_data_Size = i * train_batch_size  # cantidad de ejemplos que se evaluaran
 
-            print("Calculando Errores en validationSet y costos en validation set")
+            print("Calculando Errores en validationSet y costos en Train set")
             averageError = DBG_OCR.CalculateError(noBatchsToEvaluate=i)
 
-            print("--------[Validation Set] El error promedio es: " + str(averageError) + " para " + str(l_data_Size) + " ejemplos")
+            print("--------[Train Set] El error promedio es: " + str(averageError) + " para " + str(l_data_Size) + " ejemplos")
             averageCost = DBG_OCR.CalculateCost(noBatchsToEvaluate=i)
 
             ar.UpdateLearningCurveErrorXNoExamp(id_Analisys, l_data_Size, DBG_OCR.totalDataSize, averageError, averageCost,'ValSet')
-            print("--------[Validation Set] El costo promedio es: " + str(averageCost) + " para " + str(l_data_Size) + " ejemplos")
+            print("--------[Train Set] El costo promedio es: " + str(averageCost) + " para " + str(l_data_Size) + " ejemplos")
 
         print('--------------------------- Validation SET -------------------------------------------------')
 
+        ws=weigths_service.LoadRawWeigths(id_weigths)
         DBG_OCR = D_BenGurionOCR.DBenGurionOCR.Validator(
             id_experiment = id_experiment,
             layers_metaData = layers_metaData,
@@ -146,7 +148,7 @@ class Analizador(object):
             logger=logger,
             weigthts_service=weigthts_service,
             experimentsRepo=experimentsRepo,
-            initial_weights = weigths_service.LoadRawWeigths(id_weigths)
+            initial_weights = ws
         )
         no_batchs = DBG_OCR.totalDataSize // validation_batch_size
 
@@ -156,13 +158,13 @@ class Analizador(object):
             l_data_Size = i * validation_batch_size  # cantidad de ejemplos que se evaluaran
 
             print("Calculando Errores en test set y costos en test set")
-            averageError = DBG_OCR.CalculateError(id_weigths=id_weigths, noBatchsToEvaluate=i)
+            averageError = DBG_OCR.CalculateError(noBatchsToEvaluate=i)
 
-            print("--------[Test Set] El error promedio es: " + str(averageError) + " para " + str(l_data_Size) + " ejemplos")
-            averageCost = DBG_OCR.CalculateCost(id_weigths=id_weigths, noBatchsToEvaluate=i)
+            print("--------[Validation Set] El error promedio es: " + str(averageError) + " para " + str(l_data_Size) + " ejemplos")
+            averageCost = DBG_OCR.CalculateCost(noBatchsToEvaluate=i)
 
             ar.UpdateLearningCurveErrorXNoExamp(id_Analisys, l_data_Size, DBG_OCR.totalDataSize, averageError, averageCost,'TestSet')
-            print("--------[Test Set] El costo promedio es: " + str(averageCost) + " para " + str(l_data_Size) + " ejemplos")
+            print("--------[Validation Set] El costo promedio es: " + str(averageCost) + " para " + str(l_data_Size) + " ejemplos")
 
         return
 

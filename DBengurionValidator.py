@@ -14,7 +14,7 @@ import Domain.Analysis.Analizador as Analizador
 __author__ = 'win-g'
 #print(theano.config)
 idExperiment = 1
-idWeigths = 2
+idWeigths = 8
 
 weigthsFullPath = 'D:\\Gyo\\Dev\\ocr_abc\\Weights'
 
@@ -43,7 +43,7 @@ analizador = Analizador.Analizador('BD\\OCR_ABC.db')
 
 analizador.BuildLearningCurveAnalysisByExamples(
     id_experiment=idExperiment,
-    id_Analisys=1,
+    id_Analisys=3,
     bd='BD\\OCR_ABC.db',
     id_weigths=idWeigths,
     folderWeigths=weigthsFullPath,

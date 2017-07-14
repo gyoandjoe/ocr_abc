@@ -16,7 +16,7 @@ ef= ExperimentsFactory(bdFullPath,wService,wGenerator,trainDataSetFullPath, test
 
 ef.CreateExperiment('',batchSize=250,
                     initialLearningRate=0.1,
-                    EpochFrecSaveWeights = 20,
+                    EpochFrecSaveWeights = 5,
                     withLRDecay = 0
                     )
 
