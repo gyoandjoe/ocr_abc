@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import Domain.Analysis.AnalisysRepo as AnalisysRepo
+import Domain.Analysis.AnalisysRepo as Analisys_Repo
 import Domain.Experiments.ExperimentsRepo as ExperimentsRepo
 import Domain.Core.Weights.WeigthsService as WeigthsService
 import Domain.Core.Weights.WeigthsRepo as WeigthsRepo
@@ -11,8 +11,7 @@ import Domain.Arquitectures.DBenGurionOCR as D_BenGurionOCR
 
 class Analizador(object):
     def __init__(self, data_base):
-        self.analisys_repo = AnalisysRepo.AnalisysRepo(data_base)
-
+        self.analisys_repo = Analisys_Repo.AnalisysRepo(data_base=data_base )
 
     def AnalizarInRealTIme(self, id_experiment, velocity_update=0.05):
         #plt.axis([0, 10, 0, 1])
@@ -40,7 +39,6 @@ class Analizador(object):
 
 
             plt.pause(velocity_update)
-
 
     def AnalizarRapidamente(self, id_experiment):
         registros = self.analisys_repo.ObtenerLogsTraining(id_experiment)
@@ -124,7 +122,7 @@ class Analizador(object):
 
         no_batchs = DBG_OCR.totalDataSize // train_batch_size
 
-        ar = AnalisysRepo.AnalisysRepo(data_base=bd)
+        ar = Analisys_Repo.AnalisysRepo(data_base=bd)
         for i in range(1, no_batchs):
             l_data_Size = i * train_batch_size  # cantidad de ejemplos que se evaluaran
 
@@ -134,7 +132,7 @@ class Analizador(object):
             print("--------[Train Set] El error promedio es: " + str(averageError) + " para " + str(l_data_Size) + " ejemplos")
             averageCost = DBG_OCR.CalculateCost(noBatchsToEvaluate=i)
 
-            ar.UpdateLearningCurveErrorXNoExamp(id_Analisys, l_data_Size, DBG_OCR.totalDataSize, averageError, averageCost,'ValSet')
+            ar.UpdateLearningCurveErrorXNoExamp(id_Analisys, l_data_Size, DBG_OCR.totalDataSize, averageError, averageCost,'TrainSet')
             print("--------[Train Set] El costo promedio es: " + str(averageCost) + " para " + str(l_data_Size) + " ejemplos")
 
         print('--------------------------- Validation SET -------------------------------------------------')
@@ -144,7 +142,7 @@ class Analizador(object):
             id_experiment = id_experiment,
             layers_metaData = layers_metaData,
             batch_size = validation_batch_size,
-            raw_data_set = raw_train_set,
+            raw_data_set = raw_validation_set,
             logger=logger,
             weigthts_service=weigthts_service,
             experimentsRepo=experimentsRepo,
@@ -152,7 +150,7 @@ class Analizador(object):
         )
         no_batchs = DBG_OCR.totalDataSize // validation_batch_size
 
-        ar = AnalisysRepo.AnalisysRepo(data_base=bd)
+        ar = Analisys_Repo.AnalisysRepo(data_base=bd)
 
         for i in range(1, no_batchs):
             l_data_Size = i * validation_batch_size  # cantidad de ejemplos que se evaluaran
@@ -163,7 +161,7 @@ class Analizador(object):
             print("--------[Validation Set] El error promedio es: " + str(averageError) + " para " + str(l_data_Size) + " ejemplos")
             averageCost = DBG_OCR.CalculateCost(noBatchsToEvaluate=i)
 
-            ar.UpdateLearningCurveErrorXNoExamp(id_Analisys, l_data_Size, DBG_OCR.totalDataSize, averageError, averageCost,'TestSet')
+            ar.UpdateLearningCurveErrorXNoExamp(id_Analisys, l_data_Size, DBG_OCR.totalDataSize, averageError, averageCost,'ValSet')
             print("--------[Validation Set] El costo promedio es: " + str(averageCost) + " para " + str(l_data_Size) + " ejemplos")
 
         return
@@ -212,7 +210,7 @@ class Analizador(object):
                                              'IdLearningCurveAnalysis'])
         testset_experiments = np.asarray(data_testset['NoExperiments'].values, dtype=int)
         testset_costs = np.asarray(data_testset['Cost'].values, dtype=np.float64)
-        plt.plot(testset_experiments, testset_costs, 'g-')
+        #plt.plot(testset_experiments, testset_costs, 'r-')
 
         # ValSet
         data_raw_valset = self.analisys_repo.GetDataLCXIdAnalisys(id_analisys, "ValSet")
@@ -221,7 +219,7 @@ class Analizador(object):
                                             'IdLearningCurveAnalysis'])
         valset_experiments = np.asarray(data_valset['NoExperiments'].values, dtype=int)
         valset_costs = np.asarray(data_valset['Cost'].values, dtype=np.float64)
-        plt.plot(valset_experiments, valset_costs, 'r-')
+        plt.plot(valset_experiments, valset_costs, 'g-')
 
         # TrainSet
         data_raw_trainset = self.analisys_repo.GetDataLCXIdAnalisys(id_analisys, "TrainSet")
