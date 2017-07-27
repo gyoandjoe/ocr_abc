@@ -69,7 +69,7 @@ class WeigthsRepo(object):
     def UpdateCostForWeigth(self, id_weigth, cost):
         conn = sqlite3.connect(self.database_name)
         c = conn.cursor()
-        query = "UPDATE Weights SET Cost = {0} WHERE Id = {1}".format(cost,id_weigth)
+        query = "UPDATE Weights SET TrainCost = {0} WHERE Id = {1}".format(cost,id_weigth)
         c.execute(query)
         conn.commit()
         conn.close()
@@ -78,7 +78,7 @@ class WeigthsRepo(object):
     def UpdateErrorForWeigth(self, id_weigth, error):
         conn = sqlite3.connect(self.database_name)
         c = conn.cursor()
-        query = "UPDATE Weights SET Error = {0} WHERE Id = {1}".format(error,id_weigth)
+        query = "UPDATE Weights SET TrainError = {0} WHERE Id = {1}".format(error,id_weigth)
         c.execute(query)
         conn.commit()
         conn.close()
@@ -87,7 +87,7 @@ class WeigthsRepo(object):
     def UpdateTestCostForWeigth(self, id_weigth, costTest):
         conn = sqlite3.connect(self.database_name)
         c = conn.cursor()
-        query = "UPDATE Weights SET CostTest = {0} WHERE Id = {1}".format(costTest,id_weigth)
+        query = "UPDATE Weights SET TestCost = {0} WHERE Id = {1}".format(costTest,id_weigth)
         c.execute(query)
         conn.commit()
         conn.close()
@@ -96,7 +96,7 @@ class WeigthsRepo(object):
     def UpdateTestErrorForWeigth(self, id_weigth, errorTest):
         conn = sqlite3.connect(self.database_name)
         c = conn.cursor()
-        query = "UPDATE Weights SET ErrorTest = {0} WHERE Id = {1}".format(errorTest,id_weigth)
+        query = "UPDATE Weights SET TestError = {0} WHERE Id = {1}".format(errorTest,id_weigth)
         c.execute(query)
         conn.commit()
         conn.close()
@@ -105,7 +105,7 @@ class WeigthsRepo(object):
     def UpdateValCostForWeigth(self, id_weigth, costVal):
         conn = sqlite3.connect(self.database_name)
         c = conn.cursor()
-        query = "UPDATE Weights SET CostVal = {0} WHERE Id = {1}".format(costVal,id_weigth)
+        query = "UPDATE Weights SET ValidCost = {0} WHERE Id = {1}".format(costVal,id_weigth)
         c.execute(query)
         conn.commit()
         conn.close()
@@ -114,7 +114,7 @@ class WeigthsRepo(object):
     def UpdateValErrorForWeigth(self, id_weigth, errorVal):
         conn = sqlite3.connect(self.database_name)
         c = conn.cursor()
-        query = "UPDATE Weights SET ErrorVal = {0} WHERE Id = {1}".format(errorVal,id_weigth)
+        query = "UPDATE Weights SET ValidError = {0} WHERE Id = {1}".format(errorVal,id_weigth)
         c.execute(query)
         conn.commit()
         conn.close()

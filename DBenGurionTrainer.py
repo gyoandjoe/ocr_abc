@@ -11,8 +11,8 @@ from GyoInfra.Logger import Logger
 
 
 #print(theano.config)
-idExperiment = 1
-idWeigths = 1
+idExperiment = 2
+idWeigths = 17
 dataSetPklFile = "D:\\Gyo\\Dev\\OCR\\Kaggle_chars74subset\\resources\\TrainSet_full.pkl"
 weigthsFullPath = 'D:\\Gyo\\Dev\\ocr_abc\\Weights'
 
@@ -58,6 +58,7 @@ DBG = DBenGurionOCR.DBenGurionOCR.Trainer(
             learning_rate=lRate,
             saveWeigthsFrecuency=saveWFrecuency,
             frecuency_lr_decay=lrDecayFrecyency,
+            p_DropOut=0.7
             )
 
 DBG.Train(current_epoch=0,

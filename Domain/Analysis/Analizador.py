@@ -58,49 +58,147 @@ class Analizador(object):
             #print y
         plt.show()
 
-    def GraficarCostosXEpocaXDataSet(self, id_experiment):
-        data_weigths = self.analisys_repo.GetWeigthsByXIdExperiment(id_experiment)
-        data = pd.DataFrame(data_weigths,
-                            columns=['Id', 'IdExperiment', 'Fecha', 'Epoch', 'Batch', 'Iteration', 'Cost', 'FileName',
-                                     'HyperParams', 'Error', 'CostVal', 'ErrorVal', 'CostTest', 'ErrorTest'])
-        epochs = data['Epoch']
-        trainCost = data['Cost']
-        valCost = data['CostVal']
-        testCost = data['CostTest']
+    def BuildWeigthsErrorAndCost(self, id_experiment, bd, weigths_path,layers_metaData,train_batch_size,raw_train_set,logger,weigths_service,experimentsRepo,raw_validation_set,validation_batch_size):
+        # Calculo total del costo y error por todos los datos, pero por cada conjunto de pesos generados
+        #experiment_repo = Experiments.ExperimentsRepo.ExperimentsRepo(bd, id_experiment)
+        #weigths_repo = WeigthsRepo.WeigthsRepo(bd, weigths_path)
 
-        xEpochs = np.asarray(epochs.values, dtype=int)
+
+        weigthsOfExperiment = weigths_service.GetListOfWeightsByIdExperiment(id_experiment)
+
+
+        print('--------------------------- TEST SET -------------------------------------------------')
+
+        print("Calculando Errores en validationSet y costos en validation set")
+
+        for w in weigthsOfExperiment:
+            ws = weigths_service.LoadRawWeigths(w[0])
+            DBG_OCR = D_BenGurionOCR.DBenGurionOCR.Validator(
+                id_experiment=id_experiment,
+                layers_metaData=layers_metaData,
+                batch_size=validation_batch_size,
+                raw_data_set=raw_validation_set,
+                logger=logger,
+                weigthts_service=weigths_service,
+                experimentsRepo=experimentsRepo,
+                initial_weights=ws
+            )
+
+
+
+            averageError = DBG_OCR.CalculateError()
+            weigths_service.UpdateTestErrorWeigth(w[0], averageError)
+            print("--------[Test Set] El error promedio es: " + str(averageError))
+
+
+            averageCost = DBG_OCR.CalculateCost()
+            weigths_service.UpdateTestCostWeigth(w[0], averageCost)
+            print("--------[Test Set] El costo promedio es: " + str(averageCost))
+
+
+
+
+        print('--------------------------- TRAIN SET -------------------------------------------------')
+
+
+
+        # Actualizamos los costos en el dataset entero con cada uno de los pesos de que se han generado durante un determinado experimento
+        # Por cada conjunto de pesos obtenidos en el experimento, hacemos el calculo del costo y del error en el train set
+        print("Calculando errores en trainSet y costos en trainSet")
+
+        for w in weigthsOfExperiment:
+            ws = weigths_service.LoadRawWeigths(w[0])
+            DBG_OCR = D_BenGurionOCR.DBenGurionOCR.Validator(
+                id_experiment=id_experiment,
+                layers_metaData=layers_metaData,
+                batch_size=train_batch_size,
+                raw_data_set=raw_train_set,
+                logger=logger,
+                weigthts_service=weigths_service,
+                experimentsRepo=experimentsRepo,
+                initial_weights=ws
+            )
+
+            averageError = DBG_OCR.CalculateError()
+            weigths_service.UpdateTrainErrorWeigth(w[0], averageError)
+            print("--------[Train Set] El error promedio es: " + str(averageError))
+
+
+            averageCost = DBG_OCR.CalculateCost()
+            weigths_service.UpdateTrainCostWeigth(w[0], averageCost)
+            print("--------[Train Set] El costo promedio es: " + str(averageCost))
+
+
+        print("End Validation :)")
+
+
+    def GraficarCostosXEpocaXDataSet(self, id_experiment):
+
+        data_weigths = self.analisys_repo.GetWeigthsByXIdExperiment(id_experiment)
+        data = pd.DataFrame(data_weigths, columns=['Id',
+       'FileName',
+       'IdExperiment',
+       'FechaRegistro',
+       'Epoch',
+       'Batch',
+       'Iteracion',
+       'HyperParams',
+       'TrainError',
+       'TrainCost',
+       'ValidCost',
+       'ValidError',
+       'TestCost',
+       'TestError'])
+        epochs = data['Epoch']
+        trainCost = data['TrainCost']
+        #valCost = data['CostVal']
+        testCost = data['TestCost']
+
+        xEpochs = np.asarray(epochs.values,  dtype=int)
         yTrain = np.asarray(trainCost.values, dtype=np.float64)
-        yVal = np.asarray(valCost.values, dtype=np.float64)
+        #yVal = np.asarray(valCost.values, dtype=np.float64)
         yTest = np.asarray(testCost.values, dtype=np.float64)
 
-        plt.plot(xEpochs, yTrain, 'r--')
-        plt.plot(xEpochs, yVal, 'bs')
-        plt.plot(xEpochs, yTest, 'g^')
+
+        plt.plot(xEpochs,yTrain,'r--')
+        #plt.plot(xEpochs,yVal,'bs')
+        plt.plot(xEpochs,yTest,'g^')
         plt.title('Cost id experiment(' + str(id_experiment) + ')')
         plt.show()
         return
 
     def GraficarErrorsXEpocaXDataSet(self, id_experiment):
         data_weigths = self.analisys_repo.GetWeigthsByXIdExperiment(id_experiment)
-        data = pd.DataFrame(data_weigths,
-                            columns=['Id', 'IdExperiment', 'Fecha', 'Epoch', 'Batch', 'Iteration', 'Cost', 'FileName',
-                                     'HyperParams', 'Error', 'CostVal', 'ErrorVal', 'CostTest', 'ErrorTest'])
+        data = pd.DataFrame(data_weigths, columns=['Id','FileName',
+       'IdExperiment',
+       'FechaRegistro',
+       'Epoch',
+       'Batch',
+       'Iteracion',
+       'HyperParams',
+       'TrainError',
+       'TrainCost',
+       'ValidCost',
+       'ValidError',
+       'TestCost',
+       'TestError'])
         epochs = data['Epoch']
-        trainError = data['Error']
-        valError = data['ErrorVal']
-        testError = data['ErrorTest']
+        trainError = data['TrainError']
+        #valError = data['ValidError']
+        testError = data['TestError']
 
-        xEpochs = np.asarray(epochs.values, dtype=int)
+        xEpochs = np.asarray(epochs.values,  dtype=int)
         yTrain = np.asarray(trainError.values, dtype=np.float64)
-        yVal = np.asarray(valError.values, dtype=np.float64)
+        #yVal = np.asarray(valError.values, dtype=np.float64)
         yTest = np.asarray(testError.values, dtype=np.float64)
 
-        plt.plot(xEpochs, yTrain, 'r--')
-        plt.plot(xEpochs, yVal, 'bs')
-        plt.plot(xEpochs, yTest, 'g^')
-        plt.title('Error id experiment(' + str(id_experiment) + ')')
+        plt.plot(xEpochs,yTrain,'r--')
+        #plt.plot(xEpochs,yVal,'bs')
+        plt.plot(xEpochs,yTest,'g^')
+        plt.title('Error id experiment(' + str(id_experiment)+')')
         plt.show()
         return
+
 
     def BuildLearningCurveAnalysisByExamples(self, id_experiment,id_Analisys, bd, id_weigths, folderWeigths,layers_metaData,raw_train_set,train_batch_size,raw_validation_set,validation_batch_size,logger,weigthts_service,experimentsRepo):
         weigths_repo = WeigthsRepo.WeigthsRepo(bd,folderWeigths)
@@ -234,10 +332,4 @@ class Analizador(object):
         plt.show()
 
         return
-
-
-
-
-
-
 

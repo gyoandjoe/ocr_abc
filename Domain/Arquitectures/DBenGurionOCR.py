@@ -87,7 +87,7 @@ class DBenGurionOCR(object):
     """
 
     @classmethod
-    def Trainer(self,id_experiment,layers_metaData, batch_size, raw_train_set, logger, weigthts_service, experimentsRepo,initial_weights,max_epochs,with_lr_decay,learning_rate,saveWeigthsFrecuency,frecuency_lr_decay):
+    def Trainer(self,id_experiment,layers_metaData, batch_size, raw_train_set, logger, weigthts_service, experimentsRepo,initial_weights,max_epochs,with_lr_decay,learning_rate,saveWeigthsFrecuency,frecuency_lr_decay,p_DropOut):
         self.idExperiment = id_experiment
         self.logger = logger
         self.max_epochs = max_epochs
@@ -121,7 +121,8 @@ class DBenGurionOCR(object):
             initWeights=initial_weights,
             srng=rng_droput,
             no_channels_imageInput=1,
-            isTraining=1
+            isTraining=1,
+            pDropOut=p_DropOut
         )
 
         XimgLetras = np.asarray(rawXTrainingDataSet, dtype=theano.config.floatX).reshape((self.trainDataSetSize, 1, 64, 64))

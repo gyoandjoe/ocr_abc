@@ -1,4 +1,5 @@
-distributionParams = {
+
+distributionUniformParams = {
     "conv1LowValue":-0.1,
     "conv1HighValue":0.1,
 

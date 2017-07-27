@@ -4,5 +4,5 @@ __author__ = 'win-g'
 
 analizador = Analizador.Analizador('BD\\OCR_ABC.db')
 
-analizador.GraficarLCXCosts(id_analisys=3)
+analizador.GraficarLCXCosts(id_analisys=8)
 print ("Fin analisis rapido :)")

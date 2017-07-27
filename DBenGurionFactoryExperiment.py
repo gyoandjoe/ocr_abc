@@ -20,6 +20,9 @@ ef.CreateExperiment('',batchSize=250,
                     withLRDecay = 0
                     )
 
-#ef.CreateNewWeigths(1,DistTypes.DistTypes.uniform,distributionParams=config.distributionParams,layers_metaData=config.layers_metaData)
-ef.CreateNewWeigths(1,DistTypes.DistTypes.normal,distributionParams=config.distributionNormalDistParams,layers_metaData=config.layers_metaData)
+#Uniform Dist
+#ef.CreateNewWeigths(2,DistTypes.DistTypes.uniform,distributionParams=config.distributionUniformParams,layers_metaData=config.layers_metaData)
+
+#Normal Dist
+ef.CreateNewWeigths(2,DistTypes.DistTypes.normal,distributionParams=config.distributionNormalDistParams,layers_metaData=config.layers_metaData)
 
